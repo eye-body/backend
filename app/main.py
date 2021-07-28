@@ -1,14 +1,9 @@
 from typing import List, Optional
-
 from bson import ObjectId
-from fastapi import FastAPI, Body, HTTPException, status
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, Body
 import graphene
 from starlette.graphql import GraphQLApp
 from pydantic import BaseModel, Field
-
-# from graphene_pydantic import PydanticObjectType
 from pymongo import MongoClient
 
 client = MongoClient(
@@ -39,8 +34,11 @@ class UserModel(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        # ObjectId를 serialize
         json_encoders = {ObjectId: str}
+
+
+class UserInputModel(BaseModel):
+    name: str
 
 
 class Query(graphene.ObjectType):
@@ -55,23 +53,17 @@ app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=Query)))
 
 
 @app.post(
-    "/users", response_description="Add new student", response_model=UserModel
+    "/users", response_description="Add new user", response_model=UserModel
 )
-def create_user(user: UserModel = Body(...)):
-    user = jsonable_encoder(user)
-    del user["_id"]
-
-    new_user = db.user.insert_one(user)
+def create_user(user: UserInputModel = Body(...)):
+    new_user = db.user.insert_one(user.dict(exclude={"id"}))
     created_user = db.user.find_one({"_id": new_user.inserted_id})
-    print(created_user)
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED, content=created_user
-    )
+    return created_user
 
 
 @app.get(
     "/users",
-    response_description="List all students",
+    response_description="List all users",
     response_model=List[UserModel],
 )
 def get_user_list():

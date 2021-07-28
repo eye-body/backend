@@ -1,6 +1,46 @@
+from typing import List, Optional
+
+from bson import ObjectId
+from fastapi import FastAPI, Body, HTTPException, status
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 import graphene
-from fastapi import FastAPI
 from starlette.graphql import GraphQLApp
+from pydantic import BaseModel, Field
+
+# from graphene_pydantic import PydanticObjectType
+from pymongo import MongoClient
+
+client = MongoClient(
+    "mongodb+srv://server:0X3hf3ODxTufpnkK@cluster0.c85qj.mongodb.net/eye_body?retryWrites=true&w=majority"
+)
+db = client.eye_body
+
+
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid objectid")
+        return ObjectId(v)
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
+
+
+class UserModel(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id")
+    name: str
+
+    class Config:
+        arbitrary_types_allowed = True
+        # ObjectId를 serialize
+        json_encoders = {ObjectId: str}
 
 
 class Query(graphene.ObjectType):
@@ -11,4 +51,29 @@ class Query(graphene.ObjectType):
 
 
 app = FastAPI()
-app.add_route("/", GraphQLApp(schema=graphene.Schema(query=Query)))
+app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=Query)))
+
+
+@app.post(
+    "/users", response_description="Add new student", response_model=UserModel
+)
+def create_user(user: UserModel = Body(...)):
+    user = jsonable_encoder(user)
+    del user["_id"]
+
+    new_user = db.user.insert_one(user)
+    created_user = db.user.find_one({"_id": new_user.inserted_id})
+    print(created_user)
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED, content=created_user
+    )
+
+
+@app.get(
+    "/users",
+    response_description="List all students",
+    response_model=List[UserModel],
+)
+def get_user_list():
+    user_list = db["user"].find()
+    return list(user_list)

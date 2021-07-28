@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 from bson import ObjectId
 from fastapi import FastAPI, Body
@@ -7,7 +8,7 @@ from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
 client = MongoClient(
-    "mongodb+srv://server:0X3hf3ODxTufpnkK@cluster0.c85qj.mongodb.net/eye_body?retryWrites=true&w=majority"
+    os.env["MONGODB_URI"]
 )
 db = client.eye_body
 

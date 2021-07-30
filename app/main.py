@@ -3,12 +3,13 @@ from typing import List, Optional
 from bson import ObjectId
 from fastapi import FastAPI, Body
 import graphene
+from graphene.types import Scalar
 from starlette.graphql import GraphQLApp
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
 client = MongoClient(
-    os.env["MONGODB_URI"]
+    os.environ["MONGODB_URI"]
 )
 db = client.eye_body
 
@@ -42,11 +43,39 @@ class UserInputModel(BaseModel):
     name: str
 
 
+class ObjectIdScalar(Scalar):
+    '''Object Id'''
+
+    @staticmethod
+    def serialize(id):
+        return str(id)
+
+    # @staticmethod
+    # def parse_literal(node):
+    #     if isinstance(node, ast.StringValue):
+    #         return datetime.datetime.strptime(
+    #             node.value, "%Y-%m-%dT%H:%M:%S.%f")
+
+    # @staticmethod
+    # def parse_value(value):
+    #     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+
+
+class UserSchema(graphene.ObjectType):
+    _id = ObjectIdScalar(name="_id")
+    name = graphene.String()
+
+
 class Query(graphene.ObjectType):
     hello = graphene.String(name=graphene.String(default_value="stranger"))
+    user_list = graphene.List(UserSchema)
 
     def resolve_hello(self, info, name):
         return "Hi " + name
+
+    def resolve_user_list(self, info):
+        user_list = db["user"].find()
+        return list(user_list)
 
 
 app = FastAPI()

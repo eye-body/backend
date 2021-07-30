@@ -8,6 +8,8 @@ from starlette.graphql import GraphQLApp
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
 
+from schema import UserSchema
+
 client = MongoClient(
     os.environ["MONGODB_URI"]
 )
@@ -41,29 +43,6 @@ class UserModel(BaseModel):
 
 class UserInputModel(BaseModel):
     name: str
-
-
-class ObjectIdScalar(Scalar):
-    '''Object Id'''
-
-    @staticmethod
-    def serialize(id):
-        return str(id)
-
-    # @staticmethod
-    # def parse_literal(node):
-    #     if isinstance(node, ast.StringValue):
-    #         return datetime.datetime.strptime(
-    #             node.value, "%Y-%m-%dT%H:%M:%S.%f")
-
-    # @staticmethod
-    # def parse_value(value):
-    #     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-
-
-class UserSchema(graphene.ObjectType):
-    _id = ObjectIdScalar(name="_id")
-    name = graphene.String()
 
 
 class Query(graphene.ObjectType):

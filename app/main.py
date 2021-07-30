@@ -48,13 +48,18 @@ class UserInputModel(BaseModel):
 class Query(graphene.ObjectType):
     hello = graphene.String(name=graphene.String(default_value="stranger"))
     user_list = graphene.List(UserSchema)
+    user = graphene.Field(UserSchema, id=graphene.String())
 
     def resolve_hello(self, info, name):
         return "Hi " + name
 
     def resolve_user_list(self, info):
-        user_list = db["user"].find()
+        user_list = db.user.find()
         return list(user_list)
+
+    def resolve_user(self, info, id):
+        user = db.user.find_one({"_id": ObjectId(id)})
+        return user
 
 
 app = FastAPI()

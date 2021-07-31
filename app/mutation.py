@@ -3,18 +3,21 @@ from database import db
 from schema import UserSchema
 
 
+class UserInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
+
+
 class CreateUser(graphene.Mutation):
     class Arguments:
-        name = graphene.String()
+        user_input = UserInput(required=True)
 
-    success = graphene.Boolean()
-    user = graphene.Field(lambda: UserSchema)
+    user = graphene.Field(UserSchema)
 
-    def mutate(root, info, name):
-        new_user = db.user.insert_one({"name": name})
+    def mutate(root, info, input: UserInput):
+        new_user = db.user.insert_one(
+            {"name": input.name})
         created_user = db.user.find_one({"_id": new_user.inserted_id})
-        success = True
-        return CreateUser(success=success, user=created_user)
+        return CreateUser(user=created_user)
 
 
 class Mutations(graphene.ObjectType):

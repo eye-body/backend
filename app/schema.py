@@ -1,8 +1,7 @@
-from graphene import ObjectType, Scalar
-from graphene import String, Boolean
+import graphene
 
 
-class ObjectIdScalar(Scalar):
+class ObjectIdScalar(graphene.Scalar):
     '''Object Id'''
 
     @staticmethod
@@ -10,14 +9,15 @@ class ObjectIdScalar(Scalar):
         return str(id)
 
 
-class UserSchema(ObjectType):
+class UserSchema(graphene.ObjectType):
     _id = ObjectIdScalar(name="_id")
-    name = String()
+    email = graphene.String()
+    name = graphene.String()
 
 
-class ImageSchema(ObjectType):
+class ImageSchema(graphene.ObjectType):
     _id = ObjectIdScalar(name="_id")
-    url = String()
-    memo = String()
-    user_id = String()
-    is_guide = Boolean()
+    url = graphene.String()
+    memo = graphene.String()
+    user_id = graphene.String()
+    is_guide = graphene.Boolean()

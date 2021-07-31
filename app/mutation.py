@@ -1,9 +1,11 @@
+import auth
 import graphene
 from database import db
 from schema import UserSchema, ImageSchema
 
 
 class UserInput(graphene.InputObjectType):
+    email = graphene.String(required=True)
     name = graphene.String(required=True)
     password = graphene.String(required=True)
 
@@ -63,6 +65,28 @@ class CreateImage(graphene.Mutation):
         return CreateImage(image=created_image)
 
 
+class UserTokenInput(graphene.InputObjectType):
+    email = graphene.String(required=True)
+    password = graphene.String(required=True)
+
+
+class GetUserToken(graphene.Mutation):
+    class Arguments:
+        input = UserTokenInput(required=True)
+
+    token = graphene.String()
+    user = graphene.Field(UserSchema)
+
+    def mutate(root, info, input: UserInput):
+        user = db.user.find_one(input)
+        token = auth.token_response({"_id": user["email"]})
+        return GetUserToken(user=user, token=token)
+
+
 class Mutations(graphene.ObjectType):
     create_user = CreateUser.Field()
     create_image = CreateImage.Field()
+    get_user_token = GetUserToken.Field()
+
+# 내정보 읽어오기
+# 내사진 올리기

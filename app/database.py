@@ -1,8 +1,6 @@
 
-import os
 from pymongo import MongoClient
+from decouple import config
 
-client = MongoClient(
-    os.environ["MONGODB_URI"]
-)
+client = MongoClient(config("MONGODB_URI"))
 db = client.eye_body

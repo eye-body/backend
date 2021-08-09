@@ -3,3 +3,4 @@ env/
 dev/
 .vscode/
 .env
+.DS_Store

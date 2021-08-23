@@ -9,4 +9,8 @@ JWT_ALGORITHM = config("ALGORITHM")
 
 
 def token_response(seed: Dict[str, Any]):
-    return jwt.encode(seed, JWT_SECRET)
+    return jwt.encode(seed, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def jwt_required(token):
+    return jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)

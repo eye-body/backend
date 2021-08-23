@@ -3,6 +3,7 @@ import graphene
 from bson import ObjectId
 from database import db
 from schema import UserSchema, ImageSchema
+import auth
 
 
 class Query(graphene.ObjectType):
@@ -19,11 +20,10 @@ class Query(graphene.ObjectType):
         user = db.user.find_one({"_id": ObjectId(id)})
         return user
 
-    def resolve_image_list(self, info, user_id=None):
-        if user_id:
-            image_list = db.image.find({"user_id": user_id})
-        else:
-            image_list = db.image.find()
+    def resolve_image_list(self, info):
+        jwt = info.context.get("request").headers.get("Authorization")
+        id = auth.jwt_required(jwt)["_id"]
+        image_list = db.image.find({"user_id": id}).sort("_id", -1)
         return list(image_list)
 
     def resolve_image(self, info, id):

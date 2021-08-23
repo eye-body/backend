@@ -13,7 +13,6 @@ class UserInput(graphene.InputObjectType):
 class ImageInput(graphene.InputObjectType):
     image = graphene.String(required=True)
     memo = graphene.String()
-    user_id = graphene.String(required=True)
     is_guide = graphene.Boolean(default=False)
 
 
@@ -51,13 +50,15 @@ class CreateImage(graphene.Mutation):
 
     image = graphene.Field(ImageSchema)
 
-    def mutate(root, info, input: UserInput):
+    def mutate(root, info, input: ImageInput):
+        jwt = info.context.get("request").headers.get("Authorization")
+        id = auth.jwt_required(jwt)["_id"]
         url = upload_image(input.image)
 
         data = {
             "url": url,
             "memo": input.memo,
-            "user_id": input.user_id,
+            "user_id": id,
             "is_guide": True if input.is_guide else False
         }
         new_image = db.image.insert_one(data)
@@ -79,7 +80,7 @@ class GetUserToken(graphene.Mutation):
 
     def mutate(root, info, input: UserInput):
         user = db.user.find_one(input)
-        token = auth.token_response({"_id": user["email"]})
+        token = auth.token_response({"_id": str(user["_id"])})
         return GetUserToken(user=user, token=token)
 
 
@@ -87,6 +88,3 @@ class Mutations(graphene.ObjectType):
     create_user = CreateUser.Field()
     create_image = CreateImage.Field()
     get_user_token = GetUserToken.Field()
-
-# 내정보 읽어오기
-# 내사진 올리기
